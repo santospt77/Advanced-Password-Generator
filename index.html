@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator - Daniel Santos</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+        }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, #1e1e1e, #2c2c2c);
+            z-index: -1;
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .password-output {
+            font-size: 1.2rem;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            letter-spacing: 1.5px;
+            user-select: none;
+            overflow-wrap: break-word;
+            max-height: 60px;
+            overflow-y: auto;
+            transition: background 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+        .password-output:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .slider-container, .options-container, .platform-container {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            font-size: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        label:hover {
+            color: #ff4d4d;
+        }
+
+        .slider {
+            width: 100%;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #2c2c2c;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            cursor: pointer;
+            background: linear-gradient(45deg, rgba(255, 0, 0, 1), rgba(100, 0, 0, 1));
+            box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5);
+            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, rgba(200, 50, 50, 1), rgba(255, 100, 100, 1));
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.7);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #ddd;
+            font-size: 1rem;
+        }
+        footer span {
+            color: #ff4d4d;
+        }
+
+        #copyFeedback {
+            display: none;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #4CAF50;
+            transition: opacity 0.5s ease;
+        }
+
+        #breakTime {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #ffcc00;
+        }
+    </style>
+    <!-- Particles.js CDN -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="container">
+        <h1>Password Generator - Daniel Santos</h1>
+        <div class="password-output" id="passwordOutput">Click to generate</div>
+        <div id="copyFeedback">Password copied to clipboard!</div>
+        <div id="breakTime"></div>
+
+        <div class="slider-container">
+            <label for="lengthSlider">Length: <span id="lengthDisplay">12</span></label>
+            <input type="range" id="lengthSlider" class="slider" min="6" max="50" value="12">
+        </div>
+
+        <div class="options-container">
+            <label><input type="checkbox" id="includeUppercase" checked> Include Uppercase</label><br>
+            <label><input type="checkbox" id="includeNumbers" checked> Include Numbers</label><br>
+            <label><input type="checkbox" id="includeSymbols" checked> Include Symbols</label>
+        </div>
+
+        <div class="platform-container">
+            <label for="platforms">Select Platform:</label>
+            <select id="platforms" onchange="applyPlatformSettings()">
+                <option value="custom">Custom</option>
+                <option value="google">Google</option>
+                <option value="facebook">Facebook</option>
+                <option value="instagram">Instagram</option>
+                <option value="twitter">Twitter</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="github">GitHub</option>
+                <option value="bank">Bank</option>
+            </select>
+        </div>
+
+        <button onclick="generatePassword()">Generate Password</button>
+        <button onclick="copyPassword()">Copy Password</button>
+        <button onclick="checkPasswordVulnerability()">Check Vulnerability</button>
+    </div>
+    <footer>
+        Made with <span>❤️</span> by Daniel Santos
+    </footer>
+
+    <script>
+        const passwordOutput = document.getElementById("passwordOutput");
+        const lengthSlider = document.getElementById("lengthSlider");
+        const lengthDisplay = document.getElementById("lengthDisplay");
+
+        lengthSlider.oninput = () => {
+            lengthDisplay.textContent = lengthSlider.value;
+        };
+
+        function applyPlatformSettings() {
+            // Existing platform logic...
+        }
+
+        function generatePassword() {
+            const length = lengthSlider.value;
+            const includeUppercase = document.getElementById("includeUppercase").checked;
+            const includeNumbers = document.getElementById("includeNumbers").checked;
+            const includeSymbols = document.getElementById("includeSymbols").checked;
+
+            const lowercase = "abcdefghijklmnopqrstuvwxyz";
+            const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const numbers = "0123456789";
+            const symbols = "!@#$%^&*()_+[]{}|;:',.<>?";
+
+            let characterPool = lowercase;
+            if (includeUppercase) characterPool += uppercase;
+            if (includeNumbers) characterPool += numbers;
+            if (includeSymbols) characterPool += symbols;
+
+            let password = "";
+            for (let i = 0; i < length; i++) {
+                password += characterPool.charAt(Math.floor(Math.random() * characterPool.length));
+            }
+
+            passwordOutput.textContent = password;
+
+            // Calculate and display the estimated break time
+            const breakTime = calculateBreakTime(password);
+            document.getElementById("breakTime").textContent = `Estimated time to crack: ${breakTime}`;
+        }
+
+        function copyPassword() {
+            const password = passwordOutput.textContent;
+            if (!password || password === "Click to generate") {
+                alert("Generate a password first!");
+                return;
+            }
+            navigator.clipboard.writeText(password)
+                .then(() => {
+                    const feedback = document.getElementById("copyFeedback");
+                    feedback.style.display = "block";
+                    feedback.style.opacity = "1";
+
+                    setTimeout(() => {
+                        feedback.style.opacity = "0";
+                        setTimeout(() => feedback.style.display = "none", 500);
+                    }, 3000);
+                })
+                .catch(() => alert("Failed to copy password."));
+        }
+
+        function calculateBreakTime(password) {
+            const includeUppercase = document.getElementById("includeUppercase").checked;
+            const includeNumbers = document.getElementById("includeNumbers").checked;
+            const includeSymbols = document.getElementById("includeSymbols").checked;
+
+            const lowercase = 26;
+            const uppercase = includeUppercase ? 26 : 0;
+            const numbers = includeNumbers ? 10 : 0;
+            const symbols = includeSymbols ? 32 : 0;
+
+            const characterPool = lowercase + uppercase + numbers + symbols;
+            const totalCombinations = Math.pow(characterPool, password.length);
+
+            const attemptsPerSecond = 1e9; // Assumindo 1 bilhão de tentativas por segundo.
+            const seconds = totalCombinations / attemptsPerSecond;
+
+            return formatTime(seconds);
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 1) return "Less than 1 second";
+            const units = [
+                { label: "year", value: 60 * 60 * 24 * 365 },
+                { label: "day", value: 60 * 60 * 24 },
+                { label: "hour", value: 60 * 60 },
+                { label: "minute", value: 60 },
+                { label: "second", value: 1 },
+            ];
+            let remaining = seconds;
+            const parts = [];
+
+            for (const unit of units) {
+                const value = Math.floor(remaining / unit.value);
+                if (value > 0) {
+                    parts.push(`${value} ${unit.label}${value > 1 ? "s" : ""}`);
+                    remaining %= unit.value;
+                }
+            }
+
+            return parts.slice(0, 2).join(", "); // Retorna as duas maiores unidades.
+        }
+
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 100, density: { enable: true, value_area: 800 } },
+                color: { value: "#ffffff" },
+                shape: { type: "circle" },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 6 }
+            },
+            interactivity: { detect_on: "canvas", events: { onhover: { enable: true, mode: "repulse" } } },
+            retina_detect: true
+        });
+    </script>
+</body>
+</html>
